@@ -68,7 +68,7 @@ func main() {
 	}
 
 	var inputRatio float64
-	fmt.Print("请输入跳跃系数(推荐值 3.856，可适当调整区间 3.600- 4.000): 精确到千分位，目前我用的3.856 能坚持到 1800")
+	fmt.Print("请输入跳跃系数(推荐值 3.856，可适当调整区间 3.600- 4.000): 精确到千分位，目前我用的3.856 能坚持到 1800-> : ")
 	_, err = fmt.Scanln(&inputRatio)
 	if err != nil {
 		log.Fatal(err)
