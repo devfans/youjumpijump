@@ -12,7 +12,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	jump "github.com/faceair/youjumpijump"
+	jump "github.com/zuojinmin/youjumpijump"
 )
 
 var similar *jump.Similar
@@ -60,6 +60,7 @@ func main() {
 		}
 	}()
 
+
 	var ip string
 	fmt.Print("请输入 WebDriverAgentRunner 监听的 IP 和端口 (例如 192.168.9.94:8100):")
 	_, err := fmt.Scanln(&ip)
@@ -68,14 +69,14 @@ func main() {
 	}
 
 	var inputRatio float64
-	fmt.Print("请输入跳跃系数(推荐值 3.856，可适当调整区间 3.600- 4.000): 精确到千分位，目前我用的3.856 能坚持到 1800-> : ")
+  fmt.Print("请输入跳跃系数(推荐值 3.856，可适当调整区间 3.600- 4.000): 精确到千分位，目前我用的3.856 能坚持到 1800-> :::: ")
 	_, err = fmt.Scanln(&inputRatio)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	similar = jump.NewSimilar(inputRatio)
-
+  auto := false
 	for {
 		jump.Debugger()
 
@@ -99,29 +100,45 @@ func main() {
 		}
 		if isjump {
 			nowDistance := jump.Distance(start, end)
-			similarDistance, nowRatio := similar.Find(nowDistance)
-
-			log.Printf("起点位置:%v 结束位置:%v 距离:%.2f 系数:%.2f 变换后的系数:%v 跳跃时间:%.2fms =xxx%v", start, end, nowDistance, similarDistance, nowRatio, nowDistance*nowRatio,nowDistance * nowRatio / 1000)
+			es, di := similar.Find(nowDistance)
+      log.Printf("es %.2f div %.2f  now %.2f", es, di, nowDistance)
 			// 跳跃时间
-			var jumptime float64
-			//fmt.Print("请输入跳跃时间(可适当调整):")
-			//_, err = fmt.Scanln(&jumptime)
-			//fmt.Println("跳跃时间====",jumptime)
-			//主要修改了跳跃系数
-			jumptime = nowDistance/123.54/inputRatio;
-
-
-			fmt.Println("距离时间=====",nowDistance/123.54/inputRatio);
+			var ratio float64
+      if auto {
+        ratio = es
+      } else {
+        log.Print("ratio:")
+			  _, err = fmt.Scanln(&ratio)
+        if ratio == 0 {
+          ratio = es
+        }
+      }
+			fmt.Println("ratio====",ratio)
+			fmt.Println("jumptime=====",nowDistance/ratio);
 			_, _, err = r.PostJSON(fmt.Sprintf("http://%s/session/%s/wda/touchAndHold", ip, res.SessionID), map[string]interface{}{
 				"x":        200,
 				"y":        200,
-				"duration": jumptime,
+				"duration": nowDistance/ratio,
 
 					///nowDistance * nowRatio / 1000,
 			})
 			if err != nil {
 				panic(err)
 			}
+
+      if auto {
+			  time.Sleep(time.Millisecond * 1500)
+        continue
+      }
+      var action int32
+      log.Print("action(1:goodSample, 2:setAuto):")
+      _, err = fmt.Scanln(&action)
+      fmt.Println("action=", action)
+      if action == 1 {
+        similar.Add(nowDistance, ratio)
+      } else if action == 2 {
+        auto = true
+      }
 
 			//go func() {
 			//	time.Sleep(time.Duration(nowDistance*nowRatio/1000+50) * time.Millisecond)
