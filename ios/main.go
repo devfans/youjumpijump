@@ -116,8 +116,8 @@ func main() {
 			fmt.Println("ratio====",ratio)
 			fmt.Println("jumptime=====",nowDistance/ratio);
 			_, _, err = r.PostJSON(fmt.Sprintf("http://%s/session/%s/wda/touchAndHold", ip, res.SessionID), map[string]interface{}{
-				"x":        200,
-				"y":        200,
+				"x":        200 + rand.Intn(1000),
+				"y":        200 + rand.Intn(2000),
 				"duration": nowDistance/ratio,
 
 					///nowDistance * nowRatio / 1000,
