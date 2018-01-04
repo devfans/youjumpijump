@@ -1,12 +1,9 @@
 package jump
 
 import (
-	"bufio"
-	"fmt"
-	"math"
+  "fmt"
+	"log"
 	"os"
-	"strconv"
-	"strings"
 )
 
 var similarFile *os.File
@@ -21,17 +18,17 @@ func NewSimilar(ratio float64) *Similar {
 		ratios:       map[float64]float64{},
 		defaultRatio: ratio,
 	}
-	scanner := bufio.NewScanner(similarFile)
-	for scanner.Scan() {
-		line := strings.Split(scanner.Text(), ",")
-		if len(line) == 2 {
-			distance, err1 := strconv.ParseFloat(line[0], 64)
-			ratio, err2 := strconv.ParseFloat(line[1], 64)
-			if err1 == nil && err2 == nil {
-				similar.Add(distance, ratio)
-			}
-		}
-	}
+//  scanner := bufio.NewScanner(similarFile)
+//	for scanner.Scan() {
+//		line := strings.Split(scanner.Text(), ",")
+//		if len(line) == 2 {
+//			distance, err1 := strconv.ParseFloat(line[0], 64)
+//			ratio, err2 := strconv.ParseFloat(line[1], 64)
+//			if err1 == nil && err2 == nil {
+//				similar.Add(distance, ratio)
+//			}
+//		}
+//	}
 
 	return similar
 }
@@ -49,21 +46,42 @@ func (s *Similar) Add(distance, ratio float64) {
 	s.ratios[distance] = ratio
 }
 
-func (s *Similar) Find(nowDistance float64) (similarDistance, simlarRatio float64) {
-	sumR := 0.0
-	sumD := 0.0
-	count := 0.0
-
+func (s *Similar) Find(nowDistance float64) (es, di float64) {
+  hDistance := 0.0
+  hRatio := 0.0
+  lDistance := 0.0
+  lRatio := 0.0
+  hDelta := 10000.0
+  lDelta := -10000.0
+  delta := 0.0
 	for _, distance := range s.distances {
-		if math.Abs(nowDistance-distance) < 10 {
-			count++
-			sumD += distance
-			sumR += s.ratios[distance]
-		}
-	}
-	if count < 3 {
-		return 0, s.defaultRatio
+    delta = distance - nowDistance
+    if delta >= 0 && delta < hDelta {
+      hDelta = delta
+      hDistance = distance
+      hRatio = s.ratios[distance]
+    }
+    if delta <= 0 && delta > lDelta {
+      lDelta = delta
+      lDistance = distance
+      lRatio = s.ratios[distance]
+    }
 	}
 
-	return sumD / count, sumR / count
+  log.Printf("hDistance %.2f hRatio %.2f hDelta %.2f", hDistance, hRatio, hDelta)
+  log.Printf("lDistance %.2f lRatio %.2f lDelta %.2f", lDistance, lRatio, lDelta)
+
+  if hDistance == 0 && lDistance != 0 {
+    return lRatio, -lDelta
+  }
+
+  if lDistance == 0 && hDistance != 0 {
+    return hRatio, hDelta
+  }
+  if hDistance == 0 && lDistance == 0 {
+    return s.defaultRatio, 10000
+  }
+  est := ((-lDelta * hRatio)  + (hDelta * lRatio)) / (hDelta - lDelta)
+  div := (hDelta - lDelta)/2
+  return est, div
 }
